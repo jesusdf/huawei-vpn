@@ -2,6 +2,7 @@ FROM ubuntu:22.04
 
 ENV LANG C.UTF-8
 
+ARG DEBIAN_FRONTEND=noninteractive
 ARG BUILD_DATE 
 ARG COMMIT_SHA
 
@@ -19,7 +20,9 @@ LABEL org.opencontainers.image.title='huawei-vpn' \
 COPY bin/univpn*/*.run /tmp/univpn.run
 
 RUN /usr/bin/apt-get update && \
+    /usr/bin/apt-get dist-upgrade -y && \
     /usr/bin/apt-get install -y libqt5gui5 && \
+    rm -rf /var/lib/apt/lists/* && \
     /usr/bin/apt-get clean
 
 RUN set -x && \
@@ -28,4 +31,6 @@ RUN set -x && \
     /tmp/univpn.run && \
     rm -rf /tmp/*
 
-CMD [ "/usr/local/UniVPN/UniVPN" ]
+COPY startup.sh /
+
+CMD ["/startup.sh"]
