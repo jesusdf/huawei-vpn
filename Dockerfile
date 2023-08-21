@@ -18,12 +18,14 @@ LABEL org.opencontainers.image.title='huawei-vpn' \
 # https://download.leagsoft.com/download/UniVPN/linux/univpn-linux-64-10781.13.0.0522.zip
 COPY bin/univpn*/*.run /tmp/univpn.run
 
+RUN /usr/bin/apt-get update && \
+    /usr/bin/apt-get install -y libqt5gui5 && \
+    /usr/bin/apt-get clean
+
 RUN set -x && \
     mkdir -p /usr/share/fonts/ && \
     chmod +x /tmp/univpn.run && \
     /tmp/univpn.run && \
-    rm -rf /tmp/* && \
-    apt install -y libqt5gui5 && \
-    apt clean
+    rm -rf /tmp/*
 
 CMD [ "/usr/local/UniVPN/UniVPN" ]
