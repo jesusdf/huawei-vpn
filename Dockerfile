@@ -31,7 +31,10 @@ RUN set -x && \
     mkdir -p /usr/share/fonts/ && \
     chmod +x /tmp/univpn.run && \
     /tmp/univpn.run && \
-    rm -rf /tmp/*
+    rm -f /usr/local/UniVPN/*.run && \
+    rm -rf /tmp && \
+    mkdir /tmp && \
+    chmod 777 /tmp
 
 COPY xorg.conf /
 COPY startup.sh /
