@@ -22,6 +22,8 @@ RUN set -x && \
     mkdir -p /usr/share/fonts/ && \
     chmod +x /tmp/univpn.run && \
     /tmp/univpn.run && \
-    rm -rf /tmp/*
+    rm -rf /tmp/* && \
+    apt install -y libqt5gui5 && \
+    apt clean
 
 CMD [ "/usr/local/UniVPN/UniVPN" ]
