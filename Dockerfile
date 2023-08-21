@@ -1,6 +1,7 @@
 FROM ubuntu:22.04
 
 ENV LANG C.UTF-8
+ENV DISPLAY :1
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG BUILD_DATE 
@@ -21,7 +22,8 @@ COPY bin/univpn*/*.run /tmp/univpn.run
 
 RUN /usr/bin/apt-get update && \
     /usr/bin/apt-get dist-upgrade -y && \
-    /usr/bin/apt-get install -y libqt5gui5 && \
+    /usr/bin/apt-get install -y libqt5gui5 qt5dxcb-plugin xcb xcb-proto && \
+    /usr/bin/apt-get install -y xserver-xorg-video-dummy x11-apps && \
     rm -rf /var/lib/apt/lists/* && \
     /usr/bin/apt-get clean
 
@@ -31,6 +33,7 @@ RUN set -x && \
     /tmp/univpn.run && \
     rm -rf /tmp/*
 
+COPY xorg.conf /
 COPY startup.sh /
 
 CMD ["/startup.sh"]

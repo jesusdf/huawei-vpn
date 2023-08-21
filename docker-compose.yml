@@ -1,6 +1,6 @@
 version: '2'
 services:
-  l2tp-ipsec-vpn-client:
+  huawei-vpn-client:
     image: jesusdf/huawei-vpn
     container_name: huawei-vpn-client
     cap_add:
@@ -14,6 +14,8 @@ services:
 #      - VPN_PSK=my-preshared-key
 #      - VPN_USERNAME=my-domain\\\\my-username
 #      - VPN_PASSWORD=my-password
+    volume:
+      - /tmp/startup.sh:/startup.sh
     #logging:
     #  driver: none
 #    healthcheck:
