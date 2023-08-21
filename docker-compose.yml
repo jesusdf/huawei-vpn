@@ -1,0 +1,24 @@
+version: '2'
+services:
+  l2tp-ipsec-vpn-client:
+    image: jesusdf/huawei-vpn
+    container_name: huawei-vpn-client
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/ppp
+    environment:
+      - TZ=Europe/Madrid
+#      - VPN_PUBLIC_IP=123.123.123.123
+#      - VPN_PRIVATE_IP=172.16.123.123
+#      - VPN_PSK=my-preshared-key
+#      - VPN_USERNAME=my-domain\\\\my-username
+#      - VPN_PASSWORD=my-password
+    #logging:
+    #  driver: none
+#    healthcheck:
+#      test: ["CMD", "/sbin/ifconfig", "ppp0"]
+#      interval: 30s
+#      timeout: 5s
+#      retries: 2
+    restart: unless-stopped
