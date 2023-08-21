@@ -1,5 +1,7 @@
 #!/bin/sh
-/usr/bin/Xorg -noreset +extension GLX +extension RANDR +extension RENDER -logfile /var/log/Xorg.log -config /xorg.conf :1 &
+echo "tmpfs	/tmp	tmpfs	rw	0	0" >> /etc/fstab
+mount /tmp
+/usr/bin/Xorg -noreset +extension GLX +extension RANDR +extension RENDER -logfile /tmp/Xorg.log -config /xorg.conf :1 &
 while [ true ]
 do
     /usr/local/UniVPN/UniVPN
