@@ -22,8 +22,9 @@ COPY bin/univpn*/*.run /tmp/univpn.run
 
 RUN /usr/bin/apt-get update && \
     /usr/bin/apt-get dist-upgrade -y && \
-    /usr/bin/apt-get install -y libqt5gui5 qt5dxcb-plugin xcb xcb-proto && \
-    /usr/bin/apt-get install -y xserver-xorg-video-dummy x11-apps && \
+    /usr/bin/apt-get install -y --no-install-recommends libqt5gui5 qt5dxcb-plugin xcb xcb-proto && \
+    /usr/bin/apt-get install -y --no-install-recommends xserver-xorg-video-dummy x11-apps x11-xserver-utils xdg-user-dirs x11vnc && \
+    /usr/bin/apt-get install -y --no-install-recommends file libdbus-glib-1-2 libgtk-3-0 libx11-xcb1 libxt6 libasound2 && \
     rm -rf /var/lib/apt/lists/* && \
     /usr/bin/apt-get clean
 
@@ -40,3 +41,5 @@ COPY xorg.conf /
 COPY startup.sh /
 
 CMD ["/startup.sh"]
+
+EXPOSE 5900
