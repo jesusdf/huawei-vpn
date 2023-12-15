@@ -8,6 +8,7 @@ services:
     devices:
       - /dev/ppp
     environment:
+      - USER=root
       - TZ=Europe/Madrid
 #      - VPN_PUBLIC_IP=123.123.123.123
 #      - VPN_PRIVATE_IP=172.16.123.123
@@ -16,6 +17,7 @@ services:
 #      - VPN_PASSWORD=my-password
     volume:
       - /tmp/startup.sh:/startup.sh
+      - ./univpn:/root/UniVPN
     #logging:
     #  driver: none
 #    healthcheck:
@@ -24,3 +26,4 @@ services:
 #      timeout: 5s
 #      retries: 2
     restart: unless-stopped
+    network_mode: host
