@@ -11,7 +11,7 @@ LABEL org.opencontainers.image.title='huawei-vpn' \
       org.opencontainers.image.created="${BUILD_DATE}" \
       org.opencontainers.image.description='Headless Huawei SSL VPN (UniVPN) client' \
       org.opencontainers.image.documentation='https://github.com/jesusdf/huawei-vpn/blob/master/README.md' \
-      org.opencontainers.image.version='2.1' \
+      org.opencontainers.image.version='2.2' \
       org.opencontainers.image.source='https://github.com/jesusdf/huawei-vpn' \
       org.opencontainers.image.revision="${COMMIT_SHA}"
 
@@ -42,5 +42,9 @@ RUN set -x && \
 COPY univpn/ /opt/univpn/
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh /opt/univpn/connect.exp
+
+# Healthy only while the VPN interface exists and carries a gateway-pushed route.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+    CMD ip route show dev "${TUN_DEVICE:-cnem_vnic}" | grep -q .
 
 CMD ["/entrypoint.sh"]

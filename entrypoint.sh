@@ -26,6 +26,11 @@ TUN_DEVICE="${TUN_DEVICE:-cnem_vnic}"             # built-in interface name
 IF_UP="${IF_UP:-/etc/vpn/if-up.sh}"
 IF_DOWN="${IF_DOWN:-/etc/vpn/if-down.sh}"
 
+# Reconnect backoff (seconds): doubles after each failed attempt up to a cap, so
+# a down/unreachable gateway is not hammered; resets once a connection succeeds.
+RECONNECT_MIN="${RECONNECT_MIN:-5}"
+RECONNECT_MAX="${RECONNECT_MAX:-300}"
+
 # Only ever one connection, so its name is a fixed constant.
 CONNECTION_NAME=HUAWEIVPN
 
@@ -105,6 +110,7 @@ shutdown() {
 trap shutdown TERM INT
 
 # --- Supervisor loop: keep the tunnel up, run hooks, reconnect on drop --------
+backoff="$RECONNECT_MIN"
 while true; do
     start_daemon
     log "Connecting..."
@@ -117,17 +123,23 @@ while true; do
     done
 
     if iface_up; then
+        backoff="$RECONNECT_MIN"          # connected: reset the backoff
         run_hook "$IF_UP" if-up
         # Stay up until the interface disappears or the client exits.
         while kill -0 "$conn_pid" 2>/dev/null && iface_up; do
             sleep 2
         done
         run_hook "$IF_DOWN" if-down
+        delay="$RECONNECT_MIN"            # a real session dropped: retry soon
+    else
+        delay="$backoff"                  # never connected: back off harder
+        backoff=$(( backoff * 2 ))
+        [ "$backoff" -gt "$RECONNECT_MAX" ] && backoff="$RECONNECT_MAX"
     fi
 
     kill "$conn_pid" 2>/dev/null || true
     wait "$conn_pid" 2>/dev/null || true
     pkill -9 -f UniVPNCS 2>/dev/null || true
-    log "Tunnel down; reconnecting in 10s"
-    sleep 10
+    log "Reconnecting in ${delay}s"
+    sleep "$delay"
 done

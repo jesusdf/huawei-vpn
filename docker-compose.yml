@@ -22,12 +22,7 @@ services:
     # volumes:
     #   - ./if-up.sh:/etc/vpn/if-up.sh:ro
     #   - ./if-down.sh:/etc/vpn/if-down.sh:ro
-    healthcheck:
-      test: ["CMD-SHELL", "test -e /sys/class/net/${TUN_DEVICE:-cnem_vnic}"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 40s
+    # A healthcheck is defined in the image (VPN interface up with a pushed route).
     restart: unless-stopped
 
   # ---------------------------------------------------------------------------
