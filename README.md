@@ -50,6 +50,8 @@ services:
 | `TZ`           |    no    | —           | Time zone, e.g. `Europe/Madrid`.                   |
 | `IF_UP`        |    no    | `/etc/vpn/if-up.sh`   | Hook run when the tunnel comes up.        |
 | `IF_DOWN`      |    no    | `/etc/vpn/if-down.sh` | Hook run when the tunnel goes down.       |
+| `RECONNECT_MIN`|    no    | `5`         | Initial delay (s) before reconnecting; also the reset value. |
+| `RECONNECT_MAX`|    no    | `300`       | Cap (s) for the exponential reconnect backoff.     |
 
 ## Firewall hooks
 
