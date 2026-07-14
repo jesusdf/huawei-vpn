@@ -22,6 +22,10 @@ log() { echo "[entrypoint] $*"; }
 VPN_PORT="${VPN_PORT:-443}"                       # SSL VPN default is HTTPS/443
 TUN_DEVICE="${TUN_DEVICE:-cnem_vnic}"             # built-in interface name
 
+# Optional hook scripts, run when the tunnel comes up / goes down (mount them in).
+IF_UP="${IF_UP:-/etc/vpn/if-up.sh}"
+IF_DOWN="${IF_DOWN:-/etc/vpn/if-down.sh}"
+
 # Only ever one connection, so its name is a fixed constant.
 CONNECTION_NAME=HUAWEIVPN
 
@@ -75,20 +79,55 @@ start_daemon() {
     fi
 }
 
+iface_up() { [ -e "/sys/class/net/$TUN_DEVICE" ]; }
+
+# Run a hook script (if present) with the interface name and tunnel IP.
+run_hook() {
+    hook="$1"; event="$2"
+    [ -f "$hook" ] || return 0
+    VPN_IP="$(ip -4 -o addr show "$TUN_DEVICE" 2>/dev/null | awk '{print $4}' | cut -d/ -f1)"
+    export TUN_DEVICE VPN_IP VPN_GATEWAY VPN_PORT
+    log "Running $event hook: $hook (dev=$TUN_DEVICE ip=${VPN_IP:-none})"
+    if [ -x "$hook" ]; then
+        "$hook" "$TUN_DEVICE" "$VPN_IP" || log "$event hook exited non-zero"
+    else
+        sh "$hook" "$TUN_DEVICE" "$VPN_IP" || log "$event hook exited non-zero"
+    fi
+}
+
 shutdown() {
     log "Shutting down"
+    iface_up && run_hook "$IF_DOWN" if-down
     pkill -f UniVPNCS 2>/dev/null || true
     pkill -f UniVPNPromoteService 2>/dev/null || true
     exit 0
 }
 trap shutdown TERM INT
 
-# --- Supervisor loop: keep the tunnel up, reconnect on drop ------------------
+# --- Supervisor loop: keep the tunnel up, run hooks, reconnect on drop --------
 while true; do
     start_daemon
     log "Connecting..."
-    expect -f /opt/univpn/connect.exp
-    log "Tunnel session ended (rc=$?); reconnecting in 10s"
+    expect -f /opt/univpn/connect.exp &
+    conn_pid=$!
+
+    # Wait until the interface appears or the connect attempt gives up.
+    while kill -0 "$conn_pid" 2>/dev/null && ! iface_up; do
+        sleep 1
+    done
+
+    if iface_up; then
+        run_hook "$IF_UP" if-up
+        # Stay up until the interface disappears or the client exits.
+        while kill -0 "$conn_pid" 2>/dev/null && iface_up; do
+            sleep 2
+        done
+        run_hook "$IF_DOWN" if-down
+    fi
+
+    kill "$conn_pid" 2>/dev/null || true
+    wait "$conn_pid" 2>/dev/null || true
     pkill -9 -f UniVPNCS 2>/dev/null || true
+    log "Tunnel down; reconnecting in 10s"
     sleep 10
 done

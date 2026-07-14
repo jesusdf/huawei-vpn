@@ -18,6 +18,10 @@ services:
       - VPN_PASSWORD=${VPN_PASSWORD:?set VPN_PASSWORD in .env}
       # Name of the VPN interface inside the container (max 9 chars).
       - TUN_DEVICE=${TUN_DEVICE:-cnem_vnic}
+    # Optional firewall hooks (port redirections, etc.). See examples/.
+    # volumes:
+    #   - ./if-up.sh:/etc/vpn/if-up.sh:ro
+    #   - ./if-down.sh:/etc/vpn/if-down.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "test -e /sys/class/net/${TUN_DEVICE:-cnem_vnic}"]
       interval: 30s

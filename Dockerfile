@@ -25,7 +25,7 @@ COPY bin/univpn*/*.run /tmp/univpn.run
 RUN /usr/bin/apt-get update && \
     /usr/bin/apt-get dist-upgrade -y && \
     /usr/bin/apt-get install -y --no-install-recommends \
-        expect iproute2 procps ca-certificates && \
+        expect iproute2 iptables procps ca-certificates && \
     rm -rf /var/lib/apt/lists/* && \
     /usr/bin/apt-get clean
 
