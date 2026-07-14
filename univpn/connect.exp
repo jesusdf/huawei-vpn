@@ -1,0 +1,66 @@
+#!/usr/bin/expect -f
+#
+# Drives the interactive UniVPNCS CLI to bring up the tunnel using credentials
+# taken from the environment, so nothing sensitive is ever written to disk.
+#
+# Required environment variables:
+#   CONNECTION_NAME  name of the pre-rendered connection profile
+#   VPN_USERNAME     login user name
+#   VPN_PASSWORD     login password
+#
+# The connection profile itself (gateway, port, tun mode) is rendered from
+# templates into $HOME/UniVPN before this script runs.
+#
+# Note: every pattern below uses a non-empty body on purpose — an empty "{}"
+# body combined with a flagged pattern makes expect mis-parse the following
+# "timeout" keyword ("invalid command name timeout").
+
+set name $env(CONNECTION_NAME)
+set user $env(VPN_USERNAME)
+set pass $env(VPN_PASSWORD)
+
+# The gateway can be slow to answer during authentication.
+set timeout 90
+
+spawn ./UniVPNCS
+
+# Main menu lists connections as "<n>:<name>"; grab our connection's index.
+expect {
+    -re "(\[0-9]+):$name\[^A-Za-z0-9]" { set idx $expect_out(1,string) }
+    timeout { puts "\n\[connect] connection '$name' not found in menu"; exit 1 }
+}
+send "$idx\r"
+
+# Connection sub-menu -> 1:Connect
+expect {
+    -re "1:Connect" { send "1\r" }
+    timeout { puts "\n\[connect] connection sub-menu not shown"; exit 1 }
+}
+
+# Username prompt.
+expect {
+    -nocase -re "fail|error" { puts "\n\[connect] failed before login prompt"; exit 2 }
+    -re "login user name"    { send "$user\r" }
+    timeout { puts "\n\[connect] no username prompt"; exit 1 }
+}
+
+# Password prompt.
+expect {
+    -nocase -re "password" { send "$pass\r" }
+    timeout { puts "\n\[connect] no password prompt"; exit 1 }
+}
+
+# Authentication result.
+expect {
+    -re "Connect Success" { puts "\n\[connect] tunnel established" }
+    -nocase -re "incorrect|wrong|invalid|denied|fail" {
+        puts "\n\[connect] LOGIN FAILED"; exit 2
+    }
+    timeout { puts "\n\[connect] timed out waiting for connect result"; exit 1 }
+}
+
+# Keep UniVPNCS in the foreground: it holds the tunnel open. When it exits
+# (disconnect / gateway drop / signal) expect returns and the supervisor in
+# entrypoint.sh reconnects.
+set timeout -1
+expect eof

@@ -1,29 +1,39 @@
-version: '2'
 services:
-  huawei-vpn-client:
+  huawei-vpn:
+    build: .
     image: jesusdf/huawei-vpn
-    container_name: huawei-vpn-client
+    container_name: huawei-vpn
     cap_add:
       - NET_ADMIN
     devices:
-      - /dev/ppp
+      - /dev/net/tun
     environment:
+      # USER is mandatory: the UniVPN CLI segfaults without it.
       - USER=root
-      - TZ=Europe/Madrid
-#      - VPN_PUBLIC_IP=123.123.123.123
-#      - VPN_PRIVATE_IP=172.16.123.123
-#      - VPN_PSK=my-preshared-key
-#      - VPN_USERNAME=my-domain\\\\my-username
-#      - VPN_PASSWORD=my-password
-    volume:
-      - /tmp/startup.sh:/startup.sh
-      - ./univpn:/root/UniVPN
-    #logging:
-    #  driver: none
-#    healthcheck:
-#      test: ["CMD", "/sbin/ifconfig", "ppp0"]
-#      interval: 30s
-#      timeout: 5s
-#      retries: 2
+      - TZ=${TZ:-Europe/Madrid}
+      # Connection settings (put the secrets in a local .env file).
+      - VPN_GATEWAY=${VPN_GATEWAY:?set VPN_GATEWAY in .env}
+      - VPN_PORT=${VPN_PORT:-443}
+      - VPN_USERNAME=${VPN_USERNAME:?set VPN_USERNAME in .env}
+      - VPN_PASSWORD=${VPN_PASSWORD:?set VPN_PASSWORD in .env}
+      # Name of the VPN interface inside the container (max 9 chars).
+      - TUN_DEVICE=${TUN_DEVICE:-cnem_vnic}
+    healthcheck:
+      test: ["CMD-SHELL", "test -e /sys/class/net/${TUN_DEVICE:-cnem_vnic}"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
     restart: unless-stopped
-    network_mode: host
+
+  # ---------------------------------------------------------------------------
+  # Example: route another container's traffic through the VPN's network stack.
+  # It shares this container's network namespace, so with split tunnelling only
+  # the routes pushed by the gateway go through the VPN; everything else is direct.
+  #
+  # app:
+  #   image: your/app
+  #   network_mode: "service:huawei-vpn"
+  #   depends_on:
+  #     huawei-vpn:
+  #       condition: service_healthy
