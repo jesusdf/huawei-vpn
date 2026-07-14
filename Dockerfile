@@ -11,7 +11,7 @@ LABEL org.opencontainers.image.title='huawei-vpn' \
       org.opencontainers.image.created="${BUILD_DATE}" \
       org.opencontainers.image.description='Headless Huawei SSL VPN (UniVPN) client' \
       org.opencontainers.image.documentation='https://github.com/jesusdf/huawei-vpn/blob/master/README.md' \
-      org.opencontainers.image.version='2.0' \
+      org.opencontainers.image.version='2.1' \
       org.opencontainers.image.source='https://github.com/jesusdf/huawei-vpn' \
       org.opencontainers.image.revision="${COMMIT_SHA}"
 
